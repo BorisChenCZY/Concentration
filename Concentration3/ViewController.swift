@@ -10,7 +10,11 @@ import UIKit
 
 class ViewController: UIViewController {
     
-    lazy var game = Concentration(numberOfCards: (buttonArray.count + 1) / 2)
+    lazy var game = Concentration(numberOfCards: numberOfPairsOfCards)
+    
+    var numberOfPairsOfCards: Int {
+        return (buttonArray.count + 1) / 2
+    }
     
     @IBOutlet weak var counterLabel: UILabel!
     @IBOutlet weak var scoreLabel: UILabel!
@@ -18,6 +22,10 @@ class ViewController: UIViewController {
     
     @IBAction func touchButton(_ sender: UIButton) {
         if let cardNumber = buttonArray.firstIndex(of: sender) {
+            if (game.cards[cardNumber].isMatched) {
+                return
+            }
+            
             game.selectCard(of: cardNumber)
             updateViewFromModel()
         } else {
@@ -30,7 +38,7 @@ class ViewController: UIViewController {
             let card = game.cards[cardIndex]
             let sender = buttonArray[cardIndex]
             if (card.isFacedUp){
-                sender.setTitle(getEmoji(of: card.identifier), for: UIControl.State.normal)
+                sender.setTitle(getEmoji(of: card), for: UIControl.State.normal)
                 sender.backgroundColor = #colorLiteral(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)
             } else {
                 sender.setTitle("", for: UIControl.State.normal)
@@ -41,23 +49,34 @@ class ViewController: UIViewController {
         scoreLabel.text = "Scores: \(game.score)"
     }
     
-    var emojiChoices = ["👻", "💯", "😈", "😸", "🔫", "🍑", "🍎","🍬", "😱"]
-    var emojiDict = [Int:String]()
+    var emojiChoices = "👻💯😈😸🔫🍑🍎🍬😱"
+    var emojiDict = [Card:String]()
     
-    func getEmoji(of identifier:Int) -> String{
-        if emojiDict[identifier] == nil, emojiChoices.count > 0 {
-            let removeIndex = Int(arc4random_uniform((UInt32(emojiChoices.count))))
-            let emoji = emojiChoices.remove(at: removeIndex)
-            emojiDict[identifier] = emoji;
+    func getEmoji(of card:Card) -> String{
+        if emojiDict[card] == nil, emojiChoices.count > 0 {
+            let removeStringIndex = emojiChoices.index(emojiChoices.startIndex, offsetBy: emojiChoices.count.arc4random)
+            let emoji = String(emojiChoices.remove(at: removeStringIndex))
+            emojiDict[card] = emoji;
         }
-        return emojiDict[identifier] ?? "?"
+        return emojiDict[card] ?? "?"
     }
 
     @IBAction func touchNewGame(_ sender: UIButton) {
         game = Concentration(numberOfCards: (buttonArray.count + 1) / 2)
-        emojiChoices = ["👻", "💯", "😈", "😸", "🔫", "🍑", "🍎","🍬", "😱"]
-        emojiDict = [Int:String]()
+        emojiChoices = "👻💯😈😸🔫🍑🍎🍬😱"
+        emojiDict = [Card:String]()
         updateViewFromModel()
     }
 }
 
+extension Int {
+    var arc4random:Int {
+        if (self > 0){
+            return Int(arc4random_uniform((UInt32(self))))
+        } else if (self < 0) {
+            return -Int(arc4random_uniform(UInt32(abs(self))))
+        } else {
+            return 0
+        }
+    }
+}
